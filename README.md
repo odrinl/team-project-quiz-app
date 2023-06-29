@@ -1,5 +1,5 @@
 # Team project JavaScript Quiz App
-Link - 
+Link - https://odrinl.github.io/team-project-quiz-app/
 
 ## The requirements
 
