@@ -15,16 +15,16 @@ import { initWelcomePage } from './welcomePage.js';
 
 
 export const initQuestionPage = () => {
-  const currentQuizData = JSON.parse(window.localStorage.getItem('quizData'));
+  const currentQuizData = JSON.parse(window.sessionStorage.getItem('quizData'));
   const userInterface = document.getElementById(USER_INTERFACE_ID);
-  
+
   userInterface.innerHTML = '';
 
- // fade-in animation
-   userInterface.classList.remove('fade-out');
-   userInterface.classList.add('fade-in');
+  // fade-in animation
+  userInterface.classList.remove('fade-out');
+  userInterface.classList.add('fade-in');
 
-   const currentQuestion =
+  const currentQuestion =
     currentQuizData.questions[currentQuizData.currentQuestionIndex];
 
   const questionElement = createQuestionElement(currentQuestion.text);
@@ -41,17 +41,7 @@ export const initQuestionPage = () => {
 
   const answersListElement = document.getElementById(ANSWERS_LIST_ID);
 
-  //added eventlistener to "show answer" buttons
-  const showAnswerBtn = document.getElementById(SHOW_ANSWER_BUTTON_ID);
-  showAnswerBtn.addEventListener('click', () => {
-  currentQuizData.questions[currentQuizData.currentQuestionIndex].selected="passed"
-  window.localStorage.setItem("quizData",JSON.stringify(currentQuizData))
-  const correctAnswerElement = document.getElementById(currentQuestion.correct);
-  correctAnswerElement.classList.add('correct-answer');
-  
-});
-
-
+ 
   for (const [key, answerText] of Object.entries(currentQuestion.answers)) {
     const answerElement = createAnswerElement(key, answerText);
     answersListElement.appendChild(answerElement);
@@ -70,14 +60,14 @@ export const initQuestionPage = () => {
 
     nextButton.innerText = 'Finish Quiz';
     nextButton.id = FINISH_QUIZ_BUTTON_ID;
-    nextButton.addEventListener('click', finishQuiz);    
+    nextButton.addEventListener('click', finishQuiz);
   } else {
     document
       .getElementById(NEXT_QUESTION_BUTTON_ID)
       .addEventListener('click', nextQuestion);
   }
 
-  if (currentQuestion.selected !== null) {
+  if (currentQuestion.selected !== null && currentQuestion.selected !== "passed") {
     if (currentQuestion.selected === currentQuestion.correct) {
       document
         .getElementById(currentQuestion.selected)
@@ -91,11 +81,18 @@ export const initQuestionPage = () => {
         .classList.add('wrong-answer');
     }
   }
+  // show right answer after refreshing page (after clicking show answer button)
+  if (currentQuestion.selected == "passed") {
+    document
+        .getElementById(currentQuestion.correct)
+        .classList.add('correct-answer');
+  }
+
   // add a progress container 
-  const progressContainer=document.createElement('div');
-  progressContainer.id='progress-container';
-  
-// add a progress element
+  const progressContainer = document.createElement('div');
+  progressContainer.id = 'progress-container';
+
+  // add a progress element
   const progressElement = document.createElement('div');
   progressElement.id = 'progress-bar';
   scoreDiv.appendChild(progressContainer);
@@ -105,26 +102,39 @@ export const initQuestionPage = () => {
   const progressPercentage = ((currentQuizData.currentQuestionIndex + 1) / currentQuizData.questions.length) * 100;
   progressElement.style.width = `${progressPercentage}%`;
 
+   //added eventlistener to "show answer" buttons
+   const showAnswerBtn = document.getElementById(SHOW_ANSWER_BUTTON_ID);
+   showAnswerBtn.addEventListener('click', () => {
+     const currentQuizData = JSON.parse(window.sessionStorage.getItem('quizData'));
+     const question =
+     currentQuizData.questions[currentQuizData.currentQuestionIndex];     
+     
+     if (question.selected == null) {
+      document
+        .getElementById(question.correct)
+        .classList.add('correct-answer');
+        question.selected = "passed";
+        window.sessionStorage.setItem('quizData', JSON.stringify(currentQuizData));
+     }     
+   });
 };
 
 const nextQuestion = () => {
-  const currentQuizData = JSON.parse(window.localStorage.getItem('quizData'));
-  currentQuizData.currentQuestionIndex += 1; 
-  window.localStorage.setItem('quizData', JSON.stringify(currentQuizData));
+  const currentQuizData = JSON.parse(window.sessionStorage.getItem('quizData'));
+  currentQuizData.currentQuestionIndex += 1;
+  window.sessionStorage.setItem('quizData', JSON.stringify(currentQuizData));
   const userInterface = document.getElementById(USER_INTERFACE_ID);
-  
-    userInterface.classList.remove('fade-in');
-    userInterface.classList.add('fade-out');
+  userInterface.classList.remove('fade-in');
+  userInterface.classList.add('fade-out');
   // Wait for the fade-out animation to complete before loading new question
   window.setTimeout(function () {
-  initQuestionPage();
-}, 200);
+    initQuestionPage();
+  }, 200);
 };
 
 //option buttons click function
 const selectAnswer = optionId => {
-  
-  const currentQuizData = JSON.parse(window.localStorage.getItem('quizData'));
+  const currentQuizData = JSON.parse(window.sessionStorage.getItem('quizData'));
   const question =
     currentQuizData.questions[currentQuizData.currentQuestionIndex];
   if (question.selected === null) {
@@ -137,40 +147,34 @@ const selectAnswer = optionId => {
     }
     const quizScore = calculateScore(currentQuizData);
     const scoreElement = createScoreElement(quizScore);
-    
-    const progressContainer=document.getElementById('progress-container')
+
+    const progressContainer = document.getElementById('progress-container')
 
     const scoreDiv = document.getElementById(SCORE_TABLE_ID);
     scoreDiv.innerHTML = '';
     scoreDiv.appendChild(scoreElement);
     scoreDiv.appendChild(progressContainer)
-    
 
- 
-
-
-    //add quiz data to localstorage to continue quiz if user refresh the page
-    window.localStorage.setItem('quizData', JSON.stringify(currentQuizData));
+    //add quiz data to sessionStorage to continue quiz if user refresh the page
+    window.sessionStorage.setItem('quizData', JSON.stringify(currentQuizData));
   }
-    
-
 };
 
 //Finish button click function
 const finishQuiz = () => {
-  const currentQuizData = JSON.parse(window.localStorage.getItem('quizData'));
+  const currentQuizData = JSON.parse(window.sessionStorage.getItem('quizData'));
   const quizScore = calculateScore(currentQuizData);
   const scoreElement = createScoreElement(quizScore);
   const userInterface = document.getElementById(USER_INTERFACE_ID);
   userInterface.innerHTML = '';
   userInterface.appendChild(scoreElement);
-  window.localStorage.removeItem('quizData');
+  window.sessionStorage.removeItem('quizData');
   // init welcome page again 
-  const restartBtn=document.createElement('button')
-  restartBtn.innerHTML='RESTART'
+  const restartBtn = document.createElement('button')
+  restartBtn.innerHTML = 'RESTART'
   userInterface.appendChild(restartBtn);
   restartBtn.setAttribute('id', 'restart-button')
-  restartBtn.addEventListener('click',initWelcomePage)
+  restartBtn.addEventListener('click', initWelcomePage)
 
 };
 

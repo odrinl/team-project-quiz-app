@@ -4,8 +4,8 @@ import { createWelcomeElement } from '../views/welcomeView.js';
 import { initQuestionPage } from './questionPage.js';
 
 export const initWelcomePage = () => {
-  //adding question object to localstorage
-  window.localStorage.setItem('quizData', JSON.stringify(quizData));
+  //adding question object to sessionstorage
+  window.sessionStorage.setItem('quizData', JSON.stringify(quizData));
   const userInterface = document.getElementById(USER_INTERFACE_ID);
   userInterface.innerHTML = '';
 

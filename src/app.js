@@ -3,7 +3,7 @@ import { initWelcomePage } from './pages/welcomePage.js';
 import { initQuestionPage } from './pages/questionPage.js';
 
 const loadApp = () => {
-  const currentQuizData = JSON.parse(window.localStorage.getItem('quizData'));
+  const currentQuizData = JSON.parse(window.sessionStorage.getItem('quizData'));
   //check if user already started quiz before
   if (currentQuizData === null) {
     quizData.currentQuestionIndex = 0;
