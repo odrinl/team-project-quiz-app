@@ -1,5 +1,6 @@
 # Team project JavaScript Quiz App
 Link - https://odrinl.github.io/team-project-quiz-app/
+Client-side web application.
 
 ## The requirements
 
