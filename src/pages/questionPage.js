@@ -1,3 +1,4 @@
+// Import constants, views, and data
 import {
   ANSWERS_LIST_ID,
   NEXT_QUESTION_BUTTON_ID,
@@ -12,183 +13,175 @@ import { createScoreElement } from '../views/scoreView.js';
 import { quizData } from '../data.js';
 import { initWelcomePage } from './welcomePage.js';
 
+// Function to retrieve current quiz data from session storage
+const getCurrentQuizData = () => JSON.parse(window.sessionStorage.getItem('quizData'));
 
+// Function to update quiz data in session storage
+const updateQuizData = (quizData) => {
+  window.sessionStorage.setItem('quizData', JSON.stringify(quizData));
+};
 
+// Function to add a CSS class to an element by its ID
+const addClassToElement = (elementId, className) => {
+  const element = document.getElementById(elementId);
+  if (element) {
+    element.classList.add(className);
+  }
+};
+
+// Initialize the question page
 export const initQuestionPage = () => {
-  const currentQuizData = JSON.parse(window.sessionStorage.getItem('quizData'));
+  const currentQuizData = getCurrentQuizData();
   const userInterface = document.getElementById(USER_INTERFACE_ID);
 
+  // Clear the user interface and apply fade-in animation
   userInterface.innerHTML = '';
-
-  // fade-in animation
   userInterface.classList.remove('fade-out');
   userInterface.classList.add('fade-in');
 
-  const currentQuestion =
-    currentQuizData.questions[currentQuizData.currentQuestionIndex];
-
+  // Get the current question and create question element
+  const currentQuestion = currentQuizData.questions[currentQuizData.currentQuestionIndex];
   const questionElement = createQuestionElement(currentQuestion.text);
-  // before question add score table to user interface
+
+  // Calculate and display the current score
   const currentScore = calculateScore(currentQuizData);
   const scoreElement = createScoreElement(currentScore);
   const scoreDiv = document.createElement('div');
   scoreDiv.id = SCORE_TABLE_ID;
   scoreDiv.appendChild(scoreElement);
-
   userInterface.appendChild(scoreDiv);
 
+  // Display the question and answers
   userInterface.appendChild(questionElement);
-
   const answersListElement = document.getElementById(ANSWERS_LIST_ID);
-
- 
   for (const [key, answerText] of Object.entries(currentQuestion.answers)) {
     const answerElement = createAnswerElement(key, answerText);
     answersListElement.appendChild(answerElement);
   }
-  //added eventlistener to option buttons
+
+  // Attach click event listeners to option buttons
   for (let element of document.getElementsByClassName('option')) {
     element.addEventListener('click', () => selectAnswer(element.id));
   }
 
-  //If the question is the last question we convert next button to finish button.
-  if (
-    currentQuizData.currentQuestionIndex ===
-    currentQuizData.questions.length - 1
-  ) {
-    const nextButton = document.getElementById(NEXT_QUESTION_BUTTON_ID);
+  // Update the "Next Question" button to "Finish Quiz" if necessary
+  const nextButton = document.getElementById(NEXT_QUESTION_BUTTON_ID);
+  const finishButtonId = currentQuizData.currentQuestionIndex === currentQuizData.questions.length - 1
+    ? FINISH_QUIZ_BUTTON_ID
+    : NEXT_QUESTION_BUTTON_ID;
+  nextButton.innerText = finishButtonId === FINISH_QUIZ_BUTTON_ID ? 'Finish Quiz' : 'Next Question';
+  nextButton.id = finishButtonId;
+  nextButton.addEventListener('click', finishButtonId === FINISH_QUIZ_BUTTON_ID ? finishQuiz : nextQuestion);
 
-    nextButton.innerText = 'Finish Quiz';
-    nextButton.id = FINISH_QUIZ_BUTTON_ID;
-    nextButton.addEventListener('click', finishQuiz);
-  } else {
-    document
-      .getElementById(NEXT_QUESTION_BUTTON_ID)
-      .addEventListener('click', nextQuestion);
+  // Highlight selected and correct answers
+  const selectedAnswer = currentQuestion.selected;
+  const correctAnswer = currentQuestion.correct;
+  if (selectedAnswer !== null && selectedAnswer !== 'passed') {
+    addClassToElement(selectedAnswer, selectedAnswer === correctAnswer ? 'correct-answer' : 'wrong-answer');
+    addClassToElement(correctAnswer, 'correct-answer');
+  }
+  if (selectedAnswer === 'passed') {
+    addClassToElement(correctAnswer, 'correct-answer');
   }
 
-  if (currentQuestion.selected !== null && currentQuestion.selected !== "passed") {
-    if (currentQuestion.selected === currentQuestion.correct) {
-      document
-        .getElementById(currentQuestion.selected)
-        .classList.add('correct-answer');
-    } else {
-      document
-        .getElementById(currentQuestion.correct)
-        .classList.add('correct-answer');
-      document
-        .getElementById(currentQuestion.selected)
-        .classList.add('wrong-answer');
-    }
-  }
-  // show right answer after refreshing page (after clicking show answer button)
-  if (currentQuestion.selected == "passed") {
-    document
-        .getElementById(currentQuestion.correct)
-        .classList.add('correct-answer');
-  }
-
-  // add a progress container 
+  // Add a progress bar
   const progressContainer = document.createElement('div');
   progressContainer.id = 'progress-container';
-
-  // add a progress element
   const progressElement = document.createElement('div');
   progressElement.id = 'progress-bar';
   scoreDiv.appendChild(progressContainer);
-  progressContainer.appendChild(progressElement)
+  progressContainer.appendChild(progressElement);
 
-  // calculate the progress 
+  // Calculate and set progress percentage
   const progressPercentage = ((currentQuizData.currentQuestionIndex + 1) / currentQuizData.questions.length) * 100;
   progressElement.style.width = `${progressPercentage}%`;
 
-   //added eventlistener to "show answer" buttons
-   const showAnswerBtn = document.getElementById(SHOW_ANSWER_BUTTON_ID);
-   showAnswerBtn.addEventListener('click', () => {
-     const currentQuizData = JSON.parse(window.sessionStorage.getItem('quizData'));
-     const question =
-     currentQuizData.questions[currentQuizData.currentQuestionIndex];     
-     
-     if (question.selected == null) {
-      document
-        .getElementById(question.correct)
-        .classList.add('correct-answer');
-        question.selected = "passed";
-        window.sessionStorage.setItem('quizData', JSON.stringify(currentQuizData));
-     }     
-   });
+  // Attach click event listener to "Show Answer" button
+  const showAnswerBtn = document.getElementById(SHOW_ANSWER_BUTTON_ID);
+  showAnswerBtn.addEventListener('click', () => {
+    const currentQuizData = getCurrentQuizData();
+    const question = currentQuizData.questions[currentQuizData.currentQuestionIndex];
+    
+    if (question.selected == null) {
+      addClassToElement(question.correct, 'correct-answer');
+      question.selected = 'passed';
+      updateQuizData(currentQuizData);
+    }
+  });
 };
 
+// Function to proceed to the next question
 const nextQuestion = () => {
-  const currentQuizData = JSON.parse(window.sessionStorage.getItem('quizData'));
+  const currentQuizData = getCurrentQuizData();
   currentQuizData.currentQuestionIndex += 1;
-  window.sessionStorage.setItem('quizData', JSON.stringify(currentQuizData));
+  updateQuizData(currentQuizData);
+
   const userInterface = document.getElementById(USER_INTERFACE_ID);
   userInterface.classList.remove('fade-in');
   userInterface.classList.add('fade-out');
-  // Wait for the fade-out animation to complete before loading new question
-  window.setTimeout(function () {
+
+  // Wait for the fade-out animation to complete before loading the new question
+  window.setTimeout(() => {
     initQuestionPage();
   }, 200);
 };
 
-//option buttons click function
-const selectAnswer = optionId => {
-  const currentQuizData = JSON.parse(window.sessionStorage.getItem('quizData'));
-  const question =
-    currentQuizData.questions[currentQuizData.currentQuestionIndex];
+// Function to handle selecting an answer
+const selectAnswer = (optionId) => {
+  const currentQuizData = getCurrentQuizData();
+  const question = currentQuizData.questions[currentQuizData.currentQuestionIndex];
+
   if (question.selected === null) {
     question.selected = optionId;
-    if (question.correct === optionId) {
-      document.getElementById(optionId).classList.add('correct-answer');
-    } else {
-      document.getElementById(optionId).classList.add('wrong-answer');
-      document.getElementById(question.correct).classList.add('correct-answer');
-    }
+    const isCorrect = question.correct === optionId;
+
+    addClassToElement(optionId, isCorrect ? 'correct-answer' : 'wrong-answer');
+    addClassToElement(question.correct, 'correct-answer');
+
     const quizScore = calculateScore(currentQuizData);
     const scoreElement = createScoreElement(quizScore);
 
-    const progressContainer = document.getElementById('progress-container')
-
+    const progressContainer = document.getElementById('progress-container');
     const scoreDiv = document.getElementById(SCORE_TABLE_ID);
+
     scoreDiv.innerHTML = '';
     scoreDiv.appendChild(scoreElement);
-    scoreDiv.appendChild(progressContainer)
+    scoreDiv.appendChild(progressContainer);
 
-    //add quiz data to sessionStorage to continue quiz if user refresh the page
-    window.sessionStorage.setItem('quizData', JSON.stringify(currentQuizData));
+    updateQuizData(currentQuizData);
   }
 };
 
-//Finish button click function
+// Function to finish the quiz
 const finishQuiz = () => {
-  const currentQuizData = JSON.parse(window.sessionStorage.getItem('quizData'));
+  const currentQuizData = getCurrentQuizData();
   const quizScore = calculateScore(currentQuizData);
   const scoreElement = createScoreElement(quizScore);
+
   const userInterface = document.getElementById(USER_INTERFACE_ID);
   userInterface.innerHTML = '';
   userInterface.appendChild(scoreElement);
-  window.sessionStorage.removeItem('quizData');
-  // init welcome page again 
-  const restartBtn = document.createElement('button')
-  restartBtn.innerHTML = 'RESTART'
-  userInterface.appendChild(restartBtn);
-  restartBtn.setAttribute('id', 'restart-button')
-  restartBtn.addEventListener('click', initWelcomePage)
 
+  // Remove quiz data from session storage
+  window.sessionStorage.removeItem('quizData');
+
+  // Add a restart button
+  const restartBtn = document.createElement('button');
+  restartBtn.innerHTML = 'RESTART';
+  userInterface.appendChild(restartBtn);
+  restartBtn.setAttribute('id', 'restart-button');
+  restartBtn.addEventListener('click', initWelcomePage);
 };
 
-//calculate current score
-const calculateScore = quizData => {
+// Function to calculate the current score
+const calculateScore = (quizData) => {
   let quizScore = 0;
 
-  quizData.questions.forEach(question => {
-    console.log(question.correct === question.selected);
+  quizData.questions.forEach((question) => {
     if (question.correct === question.selected) {
-      quizScore = quizScore + 1;
+      quizScore += 1;
     }
   });
+
   return quizScore;
 };
-
-
