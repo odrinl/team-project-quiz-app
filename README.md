@@ -3,7 +3,12 @@ Link - https://odrinl.github.io/team-project-quiz-app/
 
 Client-side web application.
 
-## The requirements
+## Prerequisites:
+- deadline: 5 days from scratch to release
+- team: 3 people never talked before
+- collaboration: fully remote
+
+## The requirements:
 
 - The project needs to be a quiz
 - The quiz needs to require the user to answer 10 questions
@@ -11,16 +16,14 @@ Client-side web application.
 - There needs to be a button to go to the next question
 - The project needs to be deployed somewhere
 
-## Backlog
+## Backlog:
 
 - A user can see one question at a time, stepping through the quiz
 - A user can select an answer for each question
-- Change the <title>
+- Change the title
 - add a favicon
 - A user can see what the correct answer is after they selected their answer.
 - A user can see their score update in real-time as they select answers
 - A user can refresh the page and still have his/her given answers available
 - A user can "skip" the question and learn the correct answer, this forfeits the question
 - Transition between pages or question look fancy like TypeForm for example
-
-
