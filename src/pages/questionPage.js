@@ -64,15 +64,20 @@ export const initQuestionPage = () => {
     element.addEventListener('click', () => selectAnswer(element.id));
   }
 
-  // Update the "Next Question" button to "Finish Quiz" if necessary
-  const nextButton = document.getElementById(NEXT_QUESTION_BUTTON_ID);
-  const finishButtonId = currentQuizData.currentQuestionIndex === currentQuizData.questions.length - 1
-    ? FINISH_QUIZ_BUTTON_ID
-    : NEXT_QUESTION_BUTTON_ID;
-  nextButton.innerText = finishButtonId === FINISH_QUIZ_BUTTON_ID ? 'Finish Quiz' : 'Next Question';
-  nextButton.id = finishButtonId;
-  nextButton.addEventListener('click', finishButtonId === FINISH_QUIZ_BUTTON_ID ? finishQuiz : nextQuestion);
-
+  //If the question is the last question we convert next button to finish button.
+  if (
+    currentQuizData.currentQuestionIndex ===
+    currentQuizData.questions.length - 1
+  ) {
+    const nextButton = document.getElementById(NEXT_QUESTION_BUTTON_ID);
+    nextButton.innerText = 'Finish Quiz';
+    nextButton.id = FINISH_QUIZ_BUTTON_ID;
+    nextButton.addEventListener('click', finishQuiz);
+  } else {
+    document
+      .getElementById(NEXT_QUESTION_BUTTON_ID)
+      .addEventListener('click', nextQuestion);
+  }
   // Highlight selected and correct answers
   const selectedAnswer = currentQuestion.selected;
   const correctAnswer = currentQuestion.correct;
@@ -80,19 +85,21 @@ export const initQuestionPage = () => {
     addClassToElement(selectedAnswer, selectedAnswer === correctAnswer ? 'correct-answer' : 'wrong-answer');
     addClassToElement(correctAnswer, 'correct-answer');
   }
+  // show right answer after refreshing page (after clicking show answer button)
   if (selectedAnswer === 'passed') {
     addClassToElement(correctAnswer, 'correct-answer');
   }
 
-  // Add a progress bar
+  // add a progress container
   const progressContainer = document.createElement('div');
   progressContainer.id = 'progress-container';
+  // add a progress element
   const progressElement = document.createElement('div');
   progressElement.id = 'progress-bar';
   scoreDiv.appendChild(progressContainer);
   progressContainer.appendChild(progressElement);
 
-  // Calculate and set progress percentage
+  // Calculate and set progress bar
   const progressPercentage = ((currentQuizData.currentQuestionIndex + 1) / currentQuizData.questions.length) * 100;
   progressElement.style.width = `${progressPercentage}%`;
 
@@ -148,11 +155,12 @@ const selectAnswer = (optionId) => {
     scoreDiv.appendChild(scoreElement);
     scoreDiv.appendChild(progressContainer);
 
+    //add quiz data to sessionStorage to continue quiz if user refresh the page
     updateQuizData(currentQuizData);
   }
 };
 
-// Function to finish the quiz
+//Finish button click function
 const finishQuiz = () => {
   const currentQuizData = getCurrentQuizData();
   const quizScore = calculateScore(currentQuizData);
@@ -173,7 +181,7 @@ const finishQuiz = () => {
   restartBtn.addEventListener('click', initWelcomePage);
 };
 
-// Function to calculate the current score
+// Calculate current score
 const calculateScore = (quizData) => {
   let quizScore = 0;
 
